@@ -1,6 +1,7 @@
 package kunzou.me.scheduler.domains;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -21,8 +22,8 @@ public class ScheduleEvent {
 	@Id
 	@Indexed(unique = true)
 	private String id;
-	private LocalDateTime start;
-	private LocalDateTime end;
+	private ZonedDateTime start;
+	private ZonedDateTime end;
 	private String userId;
 	private String appId;
 	private boolean taken;

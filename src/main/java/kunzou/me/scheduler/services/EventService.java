@@ -2,10 +2,7 @@ package kunzou.me.scheduler.services;
 
 import static java.time.temporal.TemporalAdjusters.*;
 
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -49,7 +46,6 @@ public class EventService {
     }
     calendarEvent.setUnitTaken(calendarEvent.getUnitTaken()+1);
     mongoTemplate.save(calendarEvent);
-
     return ResponseEntity.ok().build();
   }
 
@@ -61,19 +57,19 @@ public class EventService {
     return event.getTotalUnits() > event.getUnitTaken();
   }
 
-  public Collection<ScheduleEvent> getWeeklyBookedEvents(LocalDateTime currentDate) {
-    LocalDateTime startDate = currentDate.with(DayOfWeek.MONDAY);
-    LocalDateTime endDate = currentDate.with(DayOfWeek.FRIDAY); //todo: to end of day
+  public Collection<ScheduleEvent> getWeeklyBookedEvents(ZonedDateTime currentDate) {
+    ZonedDateTime startDate = currentDate.with(DayOfWeek.MONDAY);
+    ZonedDateTime endDate = currentDate.with(DayOfWeek.FRIDAY); //todo: to end of day
     return findEventsBetween(startDate, endDate);
   }
 
-  public Collection<ScheduleEvent> getMonthlyBookedEvents(LocalDateTime currentDate) {
-    LocalDateTime startDate = currentDate.with(firstDayOfMonth());
-    LocalDateTime endDate = currentDate.with(lastDayOfMonth());//todo: to end of day
+  public Collection<ScheduleEvent> getMonthlyBookedEvents(ZonedDateTime currentDate) {
+    ZonedDateTime startDate = currentDate.with(firstDayOfMonth());
+    ZonedDateTime endDate = currentDate.with(lastDayOfMonth());//todo: to end of day
     return findEventsBetween(startDate, endDate);
   }
 
-  Collection<ScheduleEvent> findEventsBetween(LocalDateTime startDateTime, LocalDateTime endDateTime) {
+  Collection<ScheduleEvent> findEventsBetween(ZonedDateTime startDateTime, ZonedDateTime endDateTime) {
     return mongoTemplate.find(new Query(Criteria.where("start").gte(startDateTime).and("end").lte(endDateTime)), ScheduleEvent.class);
   }
 
@@ -137,8 +133,8 @@ public class EventService {
 
   ScheduleEvent createCalendarEvent(LocalDateTime start, LocalDateTime end) {
     ScheduleEvent calendarEvent = new ScheduleEvent();
-    calendarEvent.setStart(start);
-    calendarEvent.setEnd(end);
+    calendarEvent.setStart(ZonedDateTime.of(start, ZoneId.systemDefault()));
+    calendarEvent.setEnd(ZonedDateTime.of(end, ZoneId.systemDefault()));
     calendarEvent.setTotalUnits(2); //todo
     return calendarEvent;
   }
