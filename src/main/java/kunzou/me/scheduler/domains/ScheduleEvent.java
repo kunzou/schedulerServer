@@ -1,6 +1,5 @@
 package kunzou.me.scheduler.domains;
 
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 
 import javax.persistence.Entity;

@@ -1,4 +1,4 @@
-package kunzou.me.scheduler.configurations.converters;
+package kunzou.me.scheduler.converters;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;

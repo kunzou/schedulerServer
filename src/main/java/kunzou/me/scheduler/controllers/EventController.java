@@ -18,7 +18,7 @@ import kunzou.me.scheduler.domains.ScheduleEvent;
 import kunzou.me.scheduler.services.EventService;
 
 @RestController
-@RequestMapping("/calendar")
+@RequestMapping("/events")
 @CrossOrigin
 public class EventController {
 	private static final Logger logger = LoggerFactory.getLogger(EventController.class);
