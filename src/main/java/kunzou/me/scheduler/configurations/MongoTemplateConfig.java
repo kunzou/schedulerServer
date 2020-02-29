@@ -1,9 +1,6 @@
 package kunzou.me.scheduler.configurations;
 
-import kunzou.me.scheduler.converters.DateToZonedDateTimeConverter;
-import kunzou.me.scheduler.converters.DurationToStringConverter;
-import kunzou.me.scheduler.converters.StringToDurationConverter;
-import kunzou.me.scheduler.converters.ZonedDateTimeToDateConverter;
+import kunzou.me.scheduler.converters.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.MongoDbFactory;
@@ -21,14 +18,10 @@ public class MongoTemplateConfig {
 
   private DateToZonedDateTimeConverter dateToZonedDateTimeConverter;
   private ZonedDateTimeToDateConverter zonedDateTimeToDateConverter;
-  private DurationToStringConverter durationToStringConverter;
-  private StringToDurationConverter stringToDurationConverter;
 
-  public MongoTemplateConfig(DateToZonedDateTimeConverter dateToZonedDateTimeConverter, ZonedDateTimeToDateConverter zonedDateTimeToDateConverter, DurationToStringConverter durationToStringConverter, StringToDurationConverter stringToDurationConverter) {
+  public MongoTemplateConfig(DateToZonedDateTimeConverter dateToZonedDateTimeConverter, ZonedDateTimeToDateConverter zonedDateTimeToDateConverter) {
     this.dateToZonedDateTimeConverter = dateToZonedDateTimeConverter;
     this.zonedDateTimeToDateConverter = zonedDateTimeToDateConverter;
-    this.durationToStringConverter = durationToStringConverter;
-    this.stringToDurationConverter = stringToDurationConverter;
   }
 
   @Bean
@@ -36,9 +29,7 @@ public class MongoTemplateConfig {
     MongoCustomConversions conversions = new MongoCustomConversions(
         Arrays.asList(
             dateToZonedDateTimeConverter,
-            zonedDateTimeToDateConverter,
-            durationToStringConverter,
-            stringToDurationConverter
+            zonedDateTimeToDateConverter
         ));
     MappingMongoConverter converter =
       new MappingMongoConverter(new DefaultDbRefResolver(mongoDbFactory), context);

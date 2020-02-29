@@ -26,8 +26,8 @@ public class Schedule {
   private String userId;
   private String name;
   private LocalTime eventInterval;
-  private LocalTime openTime;
-  private LocalTime closeTime;
+  private LocalTime openHour;
+  private LocalTime closeHour;
   private int maxAllowedDaysFromNow;
   private int availability;
 
