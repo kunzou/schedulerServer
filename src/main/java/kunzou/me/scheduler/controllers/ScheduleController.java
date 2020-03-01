@@ -45,4 +45,11 @@ public class ScheduleController {
   public List<Schedule> getAllSchedules() {
     return scheduleService.getAllSchedules();
   }
+
+  @GetMapping("/delete")
+  public void delete() {
+    scheduleService.deleteSchedules();
+  }
+
+
 }

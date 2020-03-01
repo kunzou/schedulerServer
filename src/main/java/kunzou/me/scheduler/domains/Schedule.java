@@ -2,11 +2,14 @@ package kunzou.me.scheduler.domains;
 
 import java.time.Duration;
 import java.time.LocalTime;
+import java.time.Period;
 import java.time.temporal.TemporalAmount;
+import java.util.concurrent.TimeUnit;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import org.springframework.data.mongodb.core.index.Indexed;
 
 import lombok.EqualsAndHashCode;
@@ -25,7 +28,7 @@ public class Schedule {
   private String id;
   private String userId;
   private String name;
-  private LocalTime eventInterval;
+  private int eventInterval;
   private LocalTime openHour;
   private LocalTime closeHour;
   private int maxAllowedDaysFromNow;

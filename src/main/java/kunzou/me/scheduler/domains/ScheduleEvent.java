@@ -23,9 +23,8 @@ public class ScheduleEvent {
 	private String id;
 	private ZonedDateTime start;
 	private ZonedDateTime end;
+	private String scheduleId;
 	private String userId;
-	private String appId;
-	private boolean taken;
 	private int totalUnits;
 	private int unitTaken;
 }

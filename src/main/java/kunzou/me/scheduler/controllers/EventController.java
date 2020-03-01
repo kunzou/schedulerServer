@@ -7,12 +7,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import kunzou.me.scheduler.domains.ScheduleEvent;
 import kunzou.me.scheduler.services.EventService;
@@ -46,13 +41,18 @@ public class EventController {
 				LocalDate.of(2020,2,29),
 				LocalTime.of(8,0),
 				LocalTime.of(17,0),
-				Duration.ofMinutes(30)
+				30
 		);
 	}
 
   @PostMapping("")
   public ResponseEntity addReservation(@RequestBody ScheduleEvent calendarEvent) {
     return eventService.add(calendarEvent);
+  }
+
+  @GetMapping("/{scheduleId}")
+  public List<ScheduleEvent> getScheduleEventsByScheduleId(@PathVariable("scheduleId") String scheduleId) {
+	  return eventService.getScheduleEventsByScheduleId(scheduleId);
   }
 
 }

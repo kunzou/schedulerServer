@@ -7,11 +7,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import kunzou.me.scheduler.domains.Schedule;
-import kunzou.me.scheduler.domains.ScheduleEvent;
 
 @Service
 public class ScheduleService {
@@ -38,4 +36,8 @@ public class ScheduleService {
 	public List<Schedule> getAllSchedules() {
 		return mongoTemplate.findAll(Schedule.class);
 	}
+
+	public void deleteSchedules() {
+	  mongoTemplate.findAll(Schedule.class).forEach(mongoTemplate::remove);
+  }
 }
