@@ -4,6 +4,7 @@ import java.time.*;
 import java.util.Collection;
 import java.util.List;
 
+import kunzou.me.scheduler.domains.ScheduleEventsResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -51,8 +52,8 @@ public class EventController {
   }
 
   @GetMapping("/{scheduleId}")
-  public List<ScheduleEvent> getScheduleEventsByScheduleId(@PathVariable("scheduleId") String scheduleId) {
-	  return eventService.getScheduleEventsByScheduleId(scheduleId);
+  public ScheduleEventsResponse getScheduleEventsByScheduleId(@PathVariable("scheduleId") String scheduleId) {
+	  return eventService.createScheduleResponse(scheduleId);
   }
 
 }

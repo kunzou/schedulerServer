@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import kunzou.me.scheduler.domains.Schedule;
+import kunzou.me.scheduler.domains.ScheduleEventsResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -33,13 +34,13 @@ public class EventService {
     this.mongoTemplate = mongoTemplate;
   }
 
-  public ResponseEntity add(ScheduleEvent calendarEvent) {
-    Collection<ScheduleEvent> events = findEventsBetween(calendarEvent.getStart(), calendarEvent.getEnd());
+  public ResponseEntity add(ScheduleEvent scheduleEvent) {
+    Collection<ScheduleEvent> events = findEventsBetween(scheduleEvent.getStart(), scheduleEvent.getEnd());
     if(!events.isEmpty() && !hasUnitAvailable(events)) {
       throw new TimeNotAvailableException(SLOT_NOT_AVAILABLE);
     }
-    calendarEvent.setUnitTaken(calendarEvent.getUnitTaken()+1);
-    mongoTemplate.save(calendarEvent);
+    scheduleEvent.setUnitTaken(scheduleEvent.getUnitTaken()+1);
+    mongoTemplate.save(scheduleEvent);
     return ResponseEntity.ok().build();
   }
 
@@ -125,15 +126,26 @@ public class EventService {
     return calendarEvent;
   }
 
-  public List<ScheduleEvent> getScheduleEventsByScheduleId(String scheduleId) {
-    Schedule schedule = mongoTemplate.findById(scheduleId, Schedule.class);
-    Collection<ScheduleEvent> reservedEvents = getEventsByScheduleId(scheduleId);
+  List<ScheduleEvent> getScheduleEventsByScheduleId(Schedule schedule) {
+//    Schedule schedule = mongoTemplate.findById(scheduleId, Schedule.class);
+    Collection<ScheduleEvent> reservedEvents = getEventsByScheduleId(schedule.getId());
     return createCalendarEventsBetween(
       LocalDate.now(),
       LocalDate.now().plusDays(schedule.getMaxAllowedDaysFromNow()),
       schedule.getOpenHour(), schedule.getCloseHour(), schedule.getEventInterval()).stream()
       .map(event -> getReservedEvent(reservedEvents, event))
       .collect(Collectors.toList());
+  }
+
+  public ScheduleEventsResponse createScheduleResponse(String scheduleId) {
+    Schedule schedule = mongoTemplate.findById(scheduleId, Schedule.class);
+    ScheduleEventsResponse response = new ScheduleEventsResponse();
+    List<ScheduleEvent> events = getScheduleEventsByScheduleId(schedule);
+    response.setScheduleEvents(events);
+    response.setDayStartHour(schedule.getOpenHour());
+    response.setDayEndHour(schedule.getCloseHour());
+    response.setName(schedule.getName());
+    return response;
   }
 
   //dummies
