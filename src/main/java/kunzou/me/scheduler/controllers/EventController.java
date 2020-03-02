@@ -42,7 +42,8 @@ public class EventController {
 				LocalDate.of(2020,2,29),
 				LocalTime.of(8,0),
 				LocalTime.of(17,0),
-				30
+				30,
+        2
 		);
 	}
 

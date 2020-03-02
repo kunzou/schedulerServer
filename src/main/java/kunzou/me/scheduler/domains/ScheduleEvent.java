@@ -25,6 +25,9 @@ public class ScheduleEvent {
 	private ZonedDateTime end;
 	private String scheduleId;
 	private String userId;
-	private int totalUnits;
-	private int unitTaken;
+  private int available;
+
+  public boolean isNew() {
+    return id == null;
+  }
 }

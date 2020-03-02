@@ -3,9 +3,7 @@ package kunzou.me.scheduler.services;
 import static java.time.temporal.TemporalAdjusters.*;
 
 import java.time.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import kunzou.me.scheduler.domains.Schedule;
@@ -35,11 +33,10 @@ public class EventService {
   }
 
   public ResponseEntity add(ScheduleEvent scheduleEvent) {
-    Collection<ScheduleEvent> events = findEventsBetween(scheduleEvent.getStart(), scheduleEvent.getEnd());
-    if(!events.isEmpty() && !hasUnitAvailable(events)) {
+    if(!scheduleEvent.isNew() && Objects.requireNonNull(mongoTemplate.findById(scheduleEvent.getId(), ScheduleEvent.class)).getAvailable() == 0) {
       throw new TimeNotAvailableException(SLOT_NOT_AVAILABLE);
     }
-    scheduleEvent.setUnitTaken(scheduleEvent.getUnitTaken()+1);
+    scheduleEvent.setAvailable(scheduleEvent.getAvailable() - 1);
     mongoTemplate.save(scheduleEvent);
     return ResponseEntity.ok().build();
   }
@@ -48,44 +45,12 @@ public class EventService {
     return mongoTemplate.find(Query.query(Criteria.where("scheduleId").is(scheduleId)), ScheduleEvent.class);
   }
 
-  boolean hasUnitAvailable(Collection<ScheduleEvent> events) {
-    return events.stream().anyMatch(this::hasUnitAvailable);
-  }
-
-  boolean hasUnitAvailable(ScheduleEvent event) {
-    return event.getTotalUnits() > event.getUnitTaken();
-  }
-
-  public Collection<ScheduleEvent> getWeeklyBookedEvents(ZonedDateTime currentDate) {
-    ZonedDateTime startDate = currentDate.with(DayOfWeek.MONDAY);
-    ZonedDateTime endDate = currentDate.with(DayOfWeek.FRIDAY); //todo: to end of day
-    return findEventsBetween(startDate, endDate);
-  }
-
-  public Collection<ScheduleEvent> getMonthlyBookedEvents(ZonedDateTime currentDate) {
-    ZonedDateTime startDate = currentDate.with(firstDayOfMonth());
-    ZonedDateTime endDate = currentDate.with(lastDayOfMonth());//todo: to end of day
-    return findEventsBetween(startDate, endDate);
-  }
-
   Collection<ScheduleEvent> findEventsBetween(ZonedDateTime startDateTime, ZonedDateTime endDateTime) {
     return mongoTemplate.find(new Query(Criteria.where("start").gte(startDateTime).and("end").lte(endDateTime)), ScheduleEvent.class);
   }
 
   List<ScheduleEvent> createCalendarEventsForUser(Schedule schedule, LocalDate startDate, LocalDate endDate) {
-    return createCalendarEventsBetween(startDate, endDate, schedule.getOpenHour(), schedule.getCloseHour(), schedule.getEventInterval());
-  }
-
-  List<ScheduleEvent> createCalendarEventsForWeek(LocalDate currentDate, Schedule schedule) {
-    LocalDate startDate = currentDate.with(DayOfWeek.MONDAY);
-    LocalDate endDate = currentDate.with(DayOfWeek.FRIDAY);
-    return createCalendarEventsBetween(startDate, endDate, schedule.getOpenHour(), schedule.getCloseHour(), schedule.getEventInterval());
-  }
-
-  List<ScheduleEvent> createCalendarEventsForMonth(LocalDate currentDate, Schedule schedule) {
-    LocalDate startDate = currentDate.with(firstDayOfMonth());
-    LocalDate endDate = currentDate.with(lastDayOfMonth());
-    return createCalendarEventsBetween(startDate, endDate, schedule.getOpenHour(), schedule.getCloseHour(), schedule.getEventInterval());
+    return createCalendarEventsBetween(startDate, endDate, schedule.getOpenHour(), schedule.getCloseHour(), schedule.getEventInterval(), schedule.getAvailability());
   }
 
   public ScheduleEvent getReservedEvent(Collection<ScheduleEvent> reservedEvents, ScheduleEvent event) {
@@ -95,22 +60,22 @@ public class EventService {
         .orElse(event);
   }
 
-  List<ScheduleEvent> createCalendarEventsBetween(LocalDate startDate, LocalDate endDate, LocalTime openTime, LocalTime closeTime, int interval) {
+  List<ScheduleEvent> createCalendarEventsBetween(LocalDate startDate, LocalDate endDate, LocalTime openTime, LocalTime closeTime, int interval, int available) {
     return LocalDateStream
       .from(startDate)
       .to(endDate)
       .stream()
-      .map(date -> createCalendarEventsForDay(date, openTime, closeTime, interval))
+      .map(date -> createCalendarEventsForDay(date, openTime, closeTime, interval, available))
       .flatMap(List::stream)
       .collect(Collectors.toList());
   }
 
-  List<ScheduleEvent> createCalendarEventsForDay(LocalDate date, LocalTime startTime, LocalTime endTime, int interval) {
+  List<ScheduleEvent> createCalendarEventsForDay(LocalDate date, LocalTime startTime, LocalTime endTime, int interval, int available) {
     LocalDateTime currentStartTime = date.atTime(startTime);
     LocalDateTime currentEndTime = date.atTime(startTime).plusMinutes(interval);
     List<ScheduleEvent> events = new ArrayList<>();
     while(!currentEndTime.isAfter(date.atTime(endTime))) {
-      events.add(createCalendarEvent(currentStartTime, currentEndTime));
+      events.add(createCalendarEvent(currentStartTime, currentEndTime, available));
       currentStartTime = currentEndTime;
       currentEndTime = currentEndTime.plusMinutes(interval);
     }
@@ -118,21 +83,20 @@ public class EventService {
     return events;
   }
 
-  ScheduleEvent createCalendarEvent(LocalDateTime start, LocalDateTime end) {
+  ScheduleEvent createCalendarEvent(LocalDateTime start, LocalDateTime end, int available) {
     ScheduleEvent calendarEvent = new ScheduleEvent();
     calendarEvent.setStart(ZonedDateTime.of(start, ZoneId.systemDefault()));
     calendarEvent.setEnd(ZonedDateTime.of(end, ZoneId.systemDefault()));
-    calendarEvent.setTotalUnits(2); //todo
+    calendarEvent.setAvailable(available);
     return calendarEvent;
   }
 
   List<ScheduleEvent> getScheduleEventsByScheduleId(Schedule schedule) {
-//    Schedule schedule = mongoTemplate.findById(scheduleId, Schedule.class);
     Collection<ScheduleEvent> reservedEvents = getEventsByScheduleId(schedule.getId());
     return createCalendarEventsBetween(
       LocalDate.now(),
       LocalDate.now().plusDays(schedule.getMaxAllowedDaysFromNow()),
-      schedule.getOpenHour(), schedule.getCloseHour(), schedule.getEventInterval()).stream()
+      schedule.getOpenHour(), schedule.getCloseHour(), schedule.getEventInterval(), schedule.getAvailability()).stream()
       .map(event -> getReservedEvent(reservedEvents, event))
       .collect(Collectors.toList());
   }
@@ -155,9 +119,9 @@ public class EventService {
     });
   }
 
-  public List<ScheduleEvent> getDummyEvents(LocalDate startDate, LocalDate endDate, LocalTime openTime, LocalTime closeTime, int interval) {
+  public List<ScheduleEvent> getDummyEvents(LocalDate startDate, LocalDate endDate, LocalTime openTime, LocalTime closeTime, int interval, int available) {
     Collection<ScheduleEvent> reservedEvents = getAllEvents();
-    return createCalendarEventsBetween(startDate, endDate, openTime, closeTime, interval).stream()
+    return createCalendarEventsBetween(startDate, endDate, openTime, closeTime, interval, available).stream()
       .map(event -> getReservedEvent(reservedEvents, event))
       .collect(Collectors.toList());
   }

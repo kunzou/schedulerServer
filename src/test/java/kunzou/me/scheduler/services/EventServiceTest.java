@@ -24,37 +24,37 @@ class EventServiceTest {
       LocalDate.of(2020, 1, 1),
       LocalTime.of(8, 0),
       LocalTime.of(8, 0),
-      30);
+      30, 2);
 
     List<ScheduleEvent> events2 = eventService.createCalendarEventsForDay(
       LocalDate.of(2020, 1, 1),
       LocalTime.of(8, 0),
       LocalTime.of(7, 0),
-      30);
+      30, 2);
 
     List<ScheduleEvent> events3 = eventService.createCalendarEventsForDay(
       LocalDate.of(2020, 1, 1),
       LocalTime.of(8, 0),
       LocalTime.of(9, 0),
-      30);
+      30, 2);
 
     List<ScheduleEvent> events4 = eventService.createCalendarEventsForDay(
       LocalDate.of(2020, 1, 1),
       LocalTime.of(8, 0),
       LocalTime.of(8, 59),
-      30);
+      30, 2);
 
     List<ScheduleEvent> events5 = eventService.createCalendarEventsForDay(
       LocalDate.of(2020, 1, 1),
       LocalTime.of(8, 0),
       LocalTime.of(17, 30),
-      30);
+      30, 2);
 
     List<ScheduleEvent> events6 = eventService.createCalendarEventsForDay(
       LocalDate.of(2020, 1, 1),
       LocalTime.of(8, 0),
       LocalTime.of(9, 0),
-      61);
+      61, 2);
 
     assertTrue(events1.isEmpty());
     assertTrue(events2.isEmpty());
