@@ -1,6 +1,7 @@
 package kunzou.me.scheduler.domains;
 
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -30,4 +31,7 @@ public class ScheduleEvent {
   public boolean isNew() {
     return id == null;
   }
+
+  public static final Comparator<ScheduleEvent> START_DATE = Comparator.comparing(ScheduleEvent::getStart, Comparator.reverseOrder());
+
 }

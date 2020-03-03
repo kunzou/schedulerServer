@@ -1,5 +1,6 @@
 package kunzou.me.scheduler.converters;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
 

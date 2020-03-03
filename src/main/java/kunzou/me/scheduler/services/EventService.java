@@ -5,6 +5,7 @@ import static java.time.temporal.TemporalAdjusters.*;
 import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import kunzou.me.scheduler.domains.Schedule;
 import kunzou.me.scheduler.domains.ScheduleEventsResponse;
@@ -42,7 +43,7 @@ public class EventService {
   }
 
   List<ScheduleEvent> getEventsByScheduleId(String scheduleId) {
-    return mongoTemplate.find(Query.query(Criteria.where("scheduleId").is(scheduleId)), ScheduleEvent.class);
+    return mongoTemplate.find(Query.query(Criteria.where("scheduleId").is(scheduleId).and("start").gte(ZonedDateTime.now())), ScheduleEvent.class);
   }
 
   Collection<ScheduleEvent> findEventsBetween(ZonedDateTime startDateTime, ZonedDateTime endDateTime) {
@@ -60,6 +61,15 @@ public class EventService {
         .orElse(event);
   }
 
+	boolean hasOverlapDates(ZonedDateTime reservedStart, ZonedDateTime reservedEnd, ZonedDateTime scheduledStart, ZonedDateTime scheduledEnd) {
+		return !(!reservedStart.isBefore(scheduledEnd) || !reservedEnd.isAfter(scheduledStart));
+	}
+
+	boolean hasOverlapDates(List<ScheduleEvent> reserved, ScheduleEvent scheduled) {
+    return reserved.stream()
+        .anyMatch(reservedEvent -> hasOverlapDates(reservedEvent.getStart(), reservedEvent.getEnd(), scheduled.getStart(), scheduled.getEnd()));
+  }
+
   List<ScheduleEvent> createCalendarEventsBetween(LocalDate startDate, LocalDate endDate, LocalTime openTime, LocalTime closeTime, int interval, int available) {
     return LocalDateStream
       .from(startDate)
@@ -75,7 +85,9 @@ public class EventService {
     LocalDateTime currentEndTime = date.atTime(startTime).plusMinutes(interval);
     List<ScheduleEvent> events = new ArrayList<>();
     while(!currentEndTime.isAfter(date.atTime(endTime))) {
-      events.add(createCalendarEvent(currentStartTime, currentEndTime, available));
+      if(currentStartTime.isAfter(LocalDateTime.now())) {
+        events.add(createCalendarEvent(currentStartTime, currentEndTime, available));
+      }
       currentStartTime = currentEndTime;
       currentEndTime = currentEndTime.plusMinutes(interval);
     }
@@ -92,13 +104,15 @@ public class EventService {
   }
 
   List<ScheduleEvent> getScheduleEventsByScheduleId(Schedule schedule) {
-    Collection<ScheduleEvent> reservedEvents = getEventsByScheduleId(schedule.getId());
-    return createCalendarEventsBetween(
+    List<ScheduleEvent> reservedEvents = getEventsByScheduleId(schedule.getId());
+    List<ScheduleEvent> createdEvents = createCalendarEventsBetween(
       LocalDate.now(),
       LocalDate.now().plusDays(schedule.getMaxAllowedDaysFromNow()),
       schedule.getOpenHour(), schedule.getCloseHour(), schedule.getEventInterval(), schedule.getAvailability()).stream()
-      .map(event -> getReservedEvent(reservedEvents, event))
-      .collect(Collectors.toList());
+        .filter(scheduledEvent -> !hasOverlapDates(reservedEvents, scheduledEvent))
+        .collect(Collectors.toList());
+    return Stream.concat(createdEvents.stream(), reservedEvents.stream())
+        .collect(Collectors.toList());
   }
 
   public ScheduleEventsResponse createScheduleResponse(String scheduleId) {
