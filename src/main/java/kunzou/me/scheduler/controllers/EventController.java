@@ -4,6 +4,8 @@ import java.time.*;
 import java.util.Collection;
 import java.util.List;
 
+import javax.mail.MessagingException;
+
 import kunzou.me.scheduler.domains.Appointment;
 import kunzou.me.scheduler.domains.ScheduleEventsResponse;
 import org.slf4j.Logger;
@@ -49,7 +51,7 @@ public class EventController {
 	}
 
   @PostMapping("")
-  public ResponseEntity addReservation(@RequestBody Appointment appointment) {
+  public ResponseEntity addReservation(@RequestBody Appointment appointment) throws MessagingException {
     return eventService.add(appointment);
   }
 

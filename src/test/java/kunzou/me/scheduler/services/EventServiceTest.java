@@ -15,7 +15,7 @@ class EventServiceTest {
 
   @BeforeEach
   public void setUp() {
-    eventService = new EventService(null);
+    eventService = new EventService(null, null);
   }
 
   @Test

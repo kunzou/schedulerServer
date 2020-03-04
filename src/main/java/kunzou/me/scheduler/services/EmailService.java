@@ -1,19 +1,16 @@
 package kunzou.me.scheduler.services;
 
 import kunzou.me.scheduler.domains.Appointment;
-import kunzou.me.scheduler.domains.Email;
 import kunzou.me.scheduler.domains.Schedule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.util.Properties;
-import java.util.Set;
 
 @Service
 public class EmailService {
@@ -29,8 +26,8 @@ public class EmailService {
   }
 
   private Message createMessage(Appointment appointment) throws MessagingException {
-    Message message = createEmailableMessage(appointment);
-    String to = mongoTemplate.findById(appointment.getScheduleId(), Schedule.class).getOwnerEmail();
+    Message message = createEmailableMessage();
+    String to = mongoTemplate.findById(appointment.getScheduleId(), Schedule.class).getUserEmail();
     message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
     message.setSubject("New appointment: "+ appointment.getStart() + appointment.getEnd());
     message.setText(
@@ -45,9 +42,9 @@ public class EmailService {
     return message;
   }
 
-  private Message createEmailableMessage(Appointment appointment) throws javax.mail.MessagingException {
-    final String username = System.getenv("EMAIL_USERNAME");
-    final String password = System.getenv("EMAIL_PASSWORD");
+  private Message createEmailableMessage() throws javax.mail.MessagingException {
+    final String username = System.getenv("ADMIN_EMAIL");
+    final String password = System.getenv("ADMIN_EMAIL_PASSWORD");
 
     Properties props = new Properties();
     props.put("mail.smtp.auth", "true");
@@ -64,7 +61,7 @@ public class EmailService {
       });
     session.setDebug(false);
     Message message = new MimeMessage(session);
-    message.setFrom(new InternetAddress(System.getenv("EMAIL_USERNAME")));
+    message.setFrom(new InternetAddress(username));
 
     return message;
   }

@@ -6,6 +6,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.mail.MessagingException;
+
 import kunzou.me.scheduler.domains.Appointment;
 import kunzou.me.scheduler.domains.Schedule;
 import kunzou.me.scheduler.domains.ScheduleEventsResponse;
@@ -28,16 +30,20 @@ public class EventService {
   private static final Logger logger = LoggerFactory.getLogger(EventService.class);
 
   private MongoTemplate mongoTemplate;
+  private EmailService emailService;
 
-  public EventService(MongoTemplate mongoTemplate) {
+  public EventService(MongoTemplate mongoTemplate, EmailService emailService) {
     this.mongoTemplate = mongoTemplate;
+    this.emailService = emailService;
   }
 
-  public ResponseEntity add(Appointment appointment) {
+  public ResponseEntity add(Appointment appointment) throws MessagingException {
     Schedule schedule = mongoTemplate.findById(appointment.getScheduleId(), Schedule.class);
     if(schedule == null || countAppointments(appointment) >= schedule.getAvailability()) {
       throw new TimeNotAvailableException(SLOT_NOT_AVAILABLE);
     }
+
+    emailService.notifyScheduleOwner(appointment);
 
     mongoTemplate.save(appointment);
     return ResponseEntity.ok().build();
