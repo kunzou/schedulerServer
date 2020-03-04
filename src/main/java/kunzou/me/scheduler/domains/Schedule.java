@@ -33,6 +33,7 @@ public class Schedule {
   private LocalTime closeHour;
   private int maxAllowedDaysFromNow;
   private int availability;
+  private String ownerEmail;
 
   public Schedule() {
   }
