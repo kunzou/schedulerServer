@@ -19,18 +19,10 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 public class ScheduleEvent {
-	@Id
-	@Indexed(unique = true)
-	private String id;
 	private ZonedDateTime start;
 	private ZonedDateTime end;
 	private String scheduleId;
-	private String userId;
   private int available;
-
-  public boolean isNew() {
-    return id == null;
-  }
 
   public static final Comparator<ScheduleEvent> START_DATE = Comparator.comparing(ScheduleEvent::getStart, Comparator.reverseOrder());
 

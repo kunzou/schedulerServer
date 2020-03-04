@@ -20,37 +20,37 @@ class EventServiceTest {
 
   @Test
   public void createCalendarEventsForDay() {
-    List<ScheduleEvent> events1 = eventService.createCalendarEventsForDay(
+    List<ScheduleEvent> events1 = eventService.createDailyCalendarEvents(
       LocalDate.of(2020, 1, 1),
       LocalTime.of(8, 0),
       LocalTime.of(8, 0),
       30, 2);
 
-    List<ScheduleEvent> events2 = eventService.createCalendarEventsForDay(
+    List<ScheduleEvent> events2 = eventService.createDailyCalendarEvents(
       LocalDate.of(2020, 1, 1),
       LocalTime.of(8, 0),
       LocalTime.of(7, 0),
       30, 2);
 
-    List<ScheduleEvent> events3 = eventService.createCalendarEventsForDay(
+    List<ScheduleEvent> events3 = eventService.createDailyCalendarEvents(
       LocalDate.of(2020, 1, 1),
       LocalTime.of(8, 0),
       LocalTime.of(9, 0),
       30, 2);
 
-    List<ScheduleEvent> events4 = eventService.createCalendarEventsForDay(
+    List<ScheduleEvent> events4 = eventService.createDailyCalendarEvents(
       LocalDate.of(2020, 1, 1),
       LocalTime.of(8, 0),
       LocalTime.of(8, 59),
       30, 2);
 
-    List<ScheduleEvent> events5 = eventService.createCalendarEventsForDay(
+    List<ScheduleEvent> events5 = eventService.createDailyCalendarEvents(
       LocalDate.of(2020, 1, 1),
       LocalTime.of(8, 0),
       LocalTime.of(17, 30),
       30, 2);
 
-    List<ScheduleEvent> events6 = eventService.createCalendarEventsForDay(
+    List<ScheduleEvent> events6 = eventService.createDailyCalendarEvents(
       LocalDate.of(2020, 1, 1),
       LocalTime.of(8, 0),
       LocalTime.of(9, 0),

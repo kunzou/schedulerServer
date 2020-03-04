@@ -1,14 +1,15 @@
 package kunzou.me.scheduler.services;
 
-import static java.time.temporal.TemporalAdjusters.*;
-
 import java.time.*;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import kunzou.me.scheduler.domains.Appointment;
 import kunzou.me.scheduler.domains.Schedule;
 import kunzou.me.scheduler.domains.ScheduleEventsResponse;
+import kunzou.me.scheduler.exception.TimeNotAvailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -20,7 +21,6 @@ import org.springframework.stereotype.Service;
 import com.ginsberg.timestream.LocalDateStream;
 
 import kunzou.me.scheduler.domains.ScheduleEvent;
-import kunzou.me.scheduler.exception.TimeNotAvailableException;
 
 @Service
 public class EventService {
@@ -33,25 +33,22 @@ public class EventService {
     this.mongoTemplate = mongoTemplate;
   }
 
-  public ResponseEntity add(ScheduleEvent scheduleEvent) {
-    if(!scheduleEvent.isNew() && Objects.requireNonNull(mongoTemplate.findById(scheduleEvent.getId(), ScheduleEvent.class)).getAvailable() == 0) {
+  public ResponseEntity add(Appointment appointment) {
+    Schedule schedule = mongoTemplate.findById(appointment.getScheduleId(), Schedule.class);
+    if(schedule == null || countAppointments(appointment) >= schedule.getAvailability()) {
       throw new TimeNotAvailableException(SLOT_NOT_AVAILABLE);
     }
-    scheduleEvent.setAvailable(scheduleEvent.getAvailable() - 1);
-    mongoTemplate.save(scheduleEvent);
+
+    mongoTemplate.save(appointment);
     return ResponseEntity.ok().build();
   }
 
-  List<ScheduleEvent> getEventsByScheduleId(String scheduleId) {
-    return mongoTemplate.find(Query.query(Criteria.where("scheduleId").is(scheduleId).and("start").gte(ZonedDateTime.now())), ScheduleEvent.class);
+  int countAppointments(Appointment appointment) {
+    return mongoTemplate.find(Query.query(Criteria.where(appointment.getScheduleId()).is("scheduleId").and("start").is(appointment.getStart()).and("end").is(appointment.getEnd())), Appointment.class).size();
   }
 
-  Collection<ScheduleEvent> findEventsBetween(ZonedDateTime startDateTime, ZonedDateTime endDateTime) {
-    return mongoTemplate.find(new Query(Criteria.where("start").gte(startDateTime).and("end").lte(endDateTime)), ScheduleEvent.class);
-  }
-
-  List<ScheduleEvent> createCalendarEventsForUser(Schedule schedule, LocalDate startDate, LocalDate endDate) {
-    return createCalendarEventsBetween(startDate, endDate, schedule.getOpenHour(), schedule.getCloseHour(), schedule.getEventInterval(), schedule.getAvailability());
+  List<Appointment> getEventsByScheduleId(String scheduleId) {
+    return mongoTemplate.find(Query.query(Criteria.where("scheduleId").is(scheduleId).and("start").gte(ZonedDateTime.now())), Appointment.class);
   }
 
   public ScheduleEvent getReservedEvent(Collection<ScheduleEvent> reservedEvents, ScheduleEvent event) {
@@ -65,7 +62,7 @@ public class EventService {
 		return !(!reservedStart.isBefore(scheduledEnd) || !reservedEnd.isAfter(scheduledStart));
 	}
 
-	boolean hasOverlapDates(List<ScheduleEvent> reserved, ScheduleEvent scheduled) {
+	boolean hasOverlapDates(List<Appointment> reserved, ScheduleEvent scheduled) {
     return reserved.stream()
         .anyMatch(reservedEvent -> hasOverlapDates(reservedEvent.getStart(), reservedEvent.getEnd(), scheduled.getStart(), scheduled.getEnd()));
   }
@@ -75,12 +72,12 @@ public class EventService {
       .from(startDate)
       .to(endDate)
       .stream()
-      .map(date -> createCalendarEventsForDay(date, openTime, closeTime, interval, available))
+      .map(date -> createDailyCalendarEvents(date, openTime, closeTime, interval, available))
       .flatMap(List::stream)
       .collect(Collectors.toList());
   }
 
-  List<ScheduleEvent> createCalendarEventsForDay(LocalDate date, LocalTime startTime, LocalTime endTime, int interval, int available) {
+  List<ScheduleEvent> createDailyCalendarEvents(LocalDate date, LocalTime startTime, LocalTime endTime, int interval, int available) {
     LocalDateTime currentStartTime = date.atTime(startTime);
     LocalDateTime currentEndTime = date.atTime(startTime).plusMinutes(interval);
     List<ScheduleEvent> events = new ArrayList<>();
@@ -104,15 +101,33 @@ public class EventService {
   }
 
   List<ScheduleEvent> getScheduleEventsByScheduleId(Schedule schedule) {
-    List<ScheduleEvent> reservedEvents = getEventsByScheduleId(schedule.getId());
+    List<Appointment> reservedEvents = getEventsByScheduleId(schedule.getId());
     List<ScheduleEvent> createdEvents = createCalendarEventsBetween(
       LocalDate.now(),
       LocalDate.now().plusDays(schedule.getMaxAllowedDaysFromNow()),
       schedule.getOpenHour(), schedule.getCloseHour(), schedule.getEventInterval(), schedule.getAvailability()).stream()
         .filter(scheduledEvent -> !hasOverlapDates(reservedEvents, scheduledEvent))
         .collect(Collectors.toList());
-    return Stream.concat(createdEvents.stream(), reservedEvents.stream())
+    return Stream.concat(createdEvents.stream(), createScheduleEvents(reservedEvents, schedule.getAvailability()).stream())
         .collect(Collectors.toList());
+  }
+
+  List<ScheduleEvent> createScheduleEvents(List<Appointment> appointments, int available) {
+    List<ScheduleEvent> scheduleEvents = new ArrayList<>();
+    appointments.stream().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+      .forEach((appointment, count) -> {
+        ScheduleEvent scheduleEvent = createScheduleEvent(appointment);
+        scheduleEvent.setAvailable(available - count.intValue());
+        scheduleEvents.add(scheduleEvent);
+      });
+    return scheduleEvents;
+  }
+
+  ScheduleEvent createScheduleEvent(Appointment appointment) {
+    ScheduleEvent scheduleEvent = new ScheduleEvent();
+    scheduleEvent.setStart(appointment.getStart());
+    scheduleEvent.setEnd(appointment.getEnd());
+    return scheduleEvent;
   }
 
   public ScheduleEventsResponse createScheduleResponse(String scheduleId) {

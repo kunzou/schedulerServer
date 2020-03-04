@@ -4,6 +4,7 @@ import java.time.*;
 import java.util.Collection;
 import java.util.List;
 
+import kunzou.me.scheduler.domains.Appointment;
 import kunzou.me.scheduler.domains.ScheduleEventsResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,8 +49,8 @@ public class EventController {
 	}
 
   @PostMapping("")
-  public ResponseEntity addReservation(@RequestBody ScheduleEvent calendarEvent) {
-    return eventService.add(calendarEvent);
+  public ResponseEntity addReservation(@RequestBody Appointment appointment) {
+    return eventService.add(appointment);
   }
 
   @GetMapping("/{scheduleId}")
