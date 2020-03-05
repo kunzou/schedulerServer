@@ -139,11 +139,14 @@ public class EventService {
   public ScheduleEventsResponse createScheduleResponse(String scheduleId) {
     Schedule schedule = mongoTemplate.findById(scheduleId, Schedule.class);
     ScheduleEventsResponse response = new ScheduleEventsResponse();
-    List<ScheduleEvent> events = getScheduleEventsByScheduleId(schedule);
-    response.setScheduleEvents(events);
-    response.setDayStartHour(schedule.getOpenHour());
-    response.setDayEndHour(schedule.getCloseHour());
-    response.setName(schedule.getName());
+    if(schedule.isCreatable()) {
+      List<ScheduleEvent> events = getScheduleEventsByScheduleId(schedule);
+      response.setScheduleEvents(events);
+      response.setDayStartHour(schedule.getOpenHour());
+      response.setDayEndHour(schedule.getCloseHour());
+      response.setName(schedule.getName());
+    }
+
     return response;
   }
 

@@ -31,10 +31,17 @@ public class Schedule {
   private int eventInterval;
   private LocalTime openHour;
   private LocalTime closeHour;
-  private int maxAllowedDaysFromNow;
-  private int availability;
+  private Integer maxAllowedDaysFromNow;
+  private Integer availability;
   private String userEmail;
 
   public Schedule() {
+  }
+
+  public boolean isCreatable() {
+    return openHour != null
+      && closeHour != null
+      && maxAllowedDaysFromNow != null
+      && availability != null;
   }
 }

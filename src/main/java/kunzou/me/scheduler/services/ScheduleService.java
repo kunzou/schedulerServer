@@ -33,6 +33,11 @@ public class ScheduleService {
 		return mongoTemplate.findById(id, Schedule.class);
 	}
 
+	public void delete(String id) {
+	  mongoTemplate.remove(getScheduleById(id));
+  }
+
+//dummies
 	public List<Schedule> getAllSchedules() {
 		return mongoTemplate.findAll(Schedule.class);
 	}
