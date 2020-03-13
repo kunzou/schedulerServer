@@ -36,4 +36,8 @@ public class Appointment {
   public int hashCode() {
     return start.hashCode() + end.hashCode();
   }
+
+  public String getGuestName() {
+    return String.join(", ", guestFirstName, guestLastName);
+  }
 }
