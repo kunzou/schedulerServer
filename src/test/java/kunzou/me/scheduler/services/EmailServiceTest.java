@@ -22,8 +22,8 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import kunzou.me.scheduler.domains.Appointment;
 import kunzou.me.scheduler.domains.Schedule;
 
+@PrepareForTest(System.class)
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({System.class})
 class EmailServiceTest {
 
 	private EmailService emailService;
@@ -32,7 +32,7 @@ class EmailServiceTest {
 
 	@BeforeEach
 	public void setUp() {
-//		mongoTemplate = PowerMock.createMock(MongoTemplate.class);
+		mongoTemplate = PowerMock.createMock(MongoTemplate.class);
 		emailService = new EmailService(mongoTemplate);
 	}
 
@@ -50,8 +50,7 @@ class EmailServiceTest {
 
 		EasyMock.expect(mongoTemplate.findById("-1", Schedule.class)).andReturn(schedule);
 
-		PowerMock.replay(mongoTemplate);
-
+		PowerMock.replayAll();
 
 		Message message = emailService.createEmailToGuest(appointment);
 
