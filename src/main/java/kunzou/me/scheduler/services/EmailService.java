@@ -27,17 +27,14 @@ public class EmailService {
           "\t\tYour appointment with %s at %s is pending. You will be notified once it is approved. Thank you.\n\t" +
           "To review your appoint, please visit %s";
 
-  private static final String USER_EMAIL_BODY = "Guest name: %s\nEmail: %s\nMessage: %s\nTo approve or decline this appointment, please visit: %s";
+  private static final String USER_EMAIL_BODY = "Guest name:\t %s\nEmail:\t\t %s\nMessage:\t %s\nTo approve or decline this appointment, please visit: %s";
 
   public EmailService(MongoTemplate mongoTemplate) {
     this.mongoTemplate = mongoTemplate;
   }
 
-  public void notifyScheduleOwner(Appointment appointment) throws MessagingException {
+  public void sendEmails(Appointment appointment) throws MessagingException {
     Transport.send(createEmailToUser(appointment));
-  }
-
-  public void notifyGuest(Appointment appointment) throws MessagingException {
     Transport.send(createEmailToGuest(appointment));
   }
 
@@ -69,7 +66,7 @@ public class EmailService {
     );
   }
 
-  private Message createEmailToUser(Appointment appointment) throws MessagingException {
+  Message createEmailToUser(Appointment appointment) throws MessagingException {
     Message message = createEmailableMessage();
     String to = Optional.ofNullable(mongoTemplate.findById(appointment.getScheduleId(), Schedule.class))
         .map(Schedule::getUserEmail)
@@ -82,7 +79,7 @@ public class EmailService {
   }
 
   private String getCalendarLink(Appointment appointment) {
-    return String.join(System.getenv("HOST_URL"), "/calendar/", appointment.getScheduleId());
+    return String.join("",System.getenv("HOST_URL"), "/calendar/", appointment.getScheduleId());
   }
 
   private String formatEmailSubject(Appointment appointment) {

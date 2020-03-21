@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 @Entity
 @Getter
@@ -38,6 +39,10 @@ public class Appointment {
   }
 
   public String getGuestName() {
-    return String.join(", ", guestFirstName, guestLastName);
+    return String.join(" ", guestFirstName, guestLastName);
+  }
+
+  public String getGuestMessage() {
+    return Objects.toString(guestMessage, "");
   }
 }

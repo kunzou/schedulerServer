@@ -43,7 +43,7 @@ public class EventService {
       throw new TimeNotAvailableException(SLOT_NOT_AVAILABLE);
     }
 
-    emailService.notifyScheduleOwner(appointment);
+    emailService.sendEmails(appointment);
 
     mongoTemplate.save(appointment);
     return ResponseEntity.ok().build();

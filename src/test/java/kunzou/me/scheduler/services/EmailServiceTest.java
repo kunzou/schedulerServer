@@ -22,8 +22,8 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import kunzou.me.scheduler.domains.Appointment;
 import kunzou.me.scheduler.domains.Schedule;
 
-@PrepareForTest(System.class)
-@RunWith(PowerMockRunner.class)
+//@RunWith(PowerMockRunner.class)
+//@PrepareForTest(System.class)
 class EmailServiceTest {
 
 	private EmailService emailService;
@@ -44,9 +44,10 @@ class EmailServiceTest {
 	@Test
 	void createEmailToGuest() throws Exception {
 		Appointment appointment = createAppointment();
-		Schedule schedule = new Schedule();
-		PowerMock.mockStatic(System.class);
-		EasyMock.expect(System.getenv("HOST_URL")).andReturn("https://kunzou.me");
+    Schedule schedule = createSchedule();
+//		PowerMock.mockStatic(System.class);
+//		EasyMock.expect(System.getenv("HOST_URL")).andReturn("https://kunzou.me");
+//    todo mockstatic not working !!
 
 		EasyMock.expect(mongoTemplate.findById("-1", Schedule.class)).andReturn(schedule);
 
@@ -57,23 +58,42 @@ class EmailServiceTest {
 		System.out.println(message.getSubject());
 		System.out.println(message.getContent().toString());
 
-		assertEquals("kunzou@gmail.com", Arrays.asList(message.getRecipients(Message.RecipientType.TO)).stream().findFirst().get().toString());
+		assertEquals("kunzou@gmail.com", Arrays.stream(message.getRecipients(Message.RecipientType.TO)).findFirst().get().toString());
 	}
 
 	private Appointment createAppointment() {
 		Appointment appointment = new Appointment();
 		appointment.setScheduleId("-1");
+    appointment.setGuestFirstName("Kun");
+    appointment.setGuestLastName("Zou");
 		appointment.setGuestEmail("kunzou@gmail.com");
 		appointment.setStart(ZonedDateTime.of(2020,1,1,9,30, 0, 0, ZoneId.systemDefault()));
 		appointment.setEnd(ZonedDateTime.of(2020,1,1,10,30, 0, 0, ZoneId.systemDefault()));
+		appointment.setGuestMessage("Good");
 
 		return appointment;
 	}
 
 	private Schedule createSchedule() {
-		Schedule schedule = new Schedule();
-		schedule.setUserEmail("zoukun777@gmail.com");
+    Schedule schedule = new Schedule();
+    schedule.setName("Booty Bay");
+    schedule.setUserEmail("zoukun777@gmail.com");
 
-		return schedule;
-	}
+    return schedule;
+  }
+
+	@Test
+  public void createEmailToUser() throws Exception {
+    Appointment appointment = createAppointment();
+    Schedule schedule = createSchedule();
+
+    EasyMock.expect(mongoTemplate.findById("-1", Schedule.class)).andReturn(schedule);
+    PowerMock.replayAll();
+
+    Message message = emailService.createEmailToUser(appointment);
+    System.out.println(message.getSubject());
+    System.out.println(message.getContent().toString());
+
+    assertEquals("zoukun777@gmail.com", Arrays.stream(message.getRecipients(Message.RecipientType.TO)).findFirst().get().toString());
+  }
 }
